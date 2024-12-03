@@ -1,0 +1,159 @@
+---
+title: "Introduction to `{resourcecode}`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to `{resourcecode}`}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "100%",
+  fig.align = "center",
+  fig.retina = 3
+)
+```
+
+```{r echo = FALSE}
+has_data <- requireNamespace("resourcecodedata", quietly = TRUE)
+if (!has_data) {
+  knitr::opts_chunk$set(eval = FALSE)
+  msg <- paste(
+    "Note: Examples in this vignette require that the",
+    "`resourcecodedata` package be installed. The system",
+    "currently running this vignette does not have that package",
+    "installed, so code examples will not be evaluated."
+  )
+  msg <- paste(strwrap(msg), collapse = "\n")
+  message(msg)
+}
+```
+
+The goal of `{resourcecode}` is to provide an easy access to the ResourceCODE hindcast database of sea-states. More information on the database can be found [here](https://resourcecode.ifremer.fr). We will explain in this vignette the way to retrieve data from this database and some the functionalities offered by this package.
+
+This package depends on data in a data package `{resourcecodedata}` that is available through a `drat` repository on GitHub.
+To use the `{resourcecode}` package, you will need to install `{resourcecodedata}` on your computer, using the following `install.packages` function (and later update it using the `update.packages` function):
+
+```{r install-data, eval=F}
+install.packages("resourcecodedata",
+  repos = "https://resourcecode-project.github.io/drat/",
+  type = "source"
+)
+```
+
+Once the packages are installed, we can proceed as usual:
+
+```{r setup}
+library(resourcecodedata)
+library(resourcecode)
+library(ggplot2)
+```
+
+## Database configuration: nodes, bathymetry...
+
+There are two grids in the Resource**CODE** hindcast database: the full, dense, **FIELD** grid, which is the grid where the numerical WWIII model is run and where sea-state parameters and only 1D spectra are available. The second grid, **SPEC**, is coarser, but contains the full 2D spectral data at each node.
+
+- **FIELD** grid
+
+The variable `rscd_field` contains the coordinates of the FIELD grid, along with the depth of these points and `d50`, the bottom sediment type. 
+
+```{r}
+str(rscd_field)
+head(rscd_field)
+```
+
+At each location, a large number of sea-state parameters are available, described in `rscd_variables`:
+
+```{r}
+str(rscd_variables)
+head(rscd_variables)
+```
+
+The available location can be plotted on a map using the following code. It can be noticed here that the variables `rscd_coastline` and `rscd_islands` contain the path of the coast line and the islands, respectively.
+
+```{r, fig.retina=3}
+lim_lon <- c(-5.25, -4.25)
+lim_lat <- c(47.75, 48.75)
+field_bzh <- ggplot(rscd_field, aes(x = longitude, y = latitude)) +
+  geom_point(size = .1, col = "lightblue") +
+  geom_path(data = rscd_coastline, linewidth = .2) +
+  geom_path(data = rscd_islands, aes(group = .data$ID), linewidth = .2) +
+  coord_sf(xlim = lim_lon, ylim = lim_lat, expand = FALSE, crs = sf::st_crs(4326)) +
+  theme_void()
+field_bzh
+```
+
+- **SPEC** grid
+
+The spectral grid, or **SPEC** grid is coarser, with more than 24,000 nodes where the full 2D spectra are available. The grid can be added to the previous plot to see the differences in the spatial coverage.
+
+```{r}
+str(rscd_spectral)
+head(rscd_spectral)
+```
+
+
+```{r, fig.retina=3}
+field_bzh + geom_point(data = rscd_spectral, col = "orange", size = .1)
+```
+
+- Helpers to find points
+
+When one is interested in some location, we also provide helpers to find the closest point in each of the grid, via the `closest_point_FIELD()` and `closest_point_SPEC()` functions.
+
+## Getting data
+
+We have two different sources of data, the FIELD grid, and the SPEC grid. We will cover each use case here.
+
+- Sea-state parameters from the FIELD can be retrieved using the `get_parameters()` function, which allows to download a time series easily at a given location. For the moment (Sept. 2023), the 1D spectra on this grid are not available to direct download.
+
+For example, if one is interested in the time series of sea-state parameters at some location, the following code can be adapted:
+
+```{r, fig.height=4,fig.width=8,warning=FALSE,message=FALSE}
+point_of_interest <- c(longitude = -4.6861533, latitude = 48.3026514)
+node <- closest_point_field(point_of_interest)
+node
+ts <- get_parameters(node = node$point, parameters = c("hs", "tp", "dp", "cge"))
+ggplot(tidyr::pivot_longer(ts, -1), aes(x = time, y = value, col = name)) +
+  geom_line() +
+  coord_cartesian(expand = FALSE) +
+  facet_wrap(~name, ncol = 2, scales = "free_y") +
+  scale_x_datetime(name = NULL, date_breaks = "month") +
+  scale_y_continuous(name = NULL) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 60, hjust = 1)
+  )
+```
+
+- 1D and 2D spectra of the SPEC grid can be downloaded directly from IFREMER FTP using functions `get_1Dspectrum()` and `get_2Dspectrum()`. We also provide a plotting function for the 2D spectrum.
+
+```{r}
+node_spectral_grid <- closest_point_spec(point_of_interest)
+```
+
+Then one can extract the 1D spectrum time-series and see the contents of these downloaded data.
+
+```{r}
+spec_1d <- get_1d_spectrum(node_spectral_grid$point, start = "1994-01-01", end = "1994-02-28")
+str(spec_1d)
+```
+
+The same applies to 2D spectra.
+
+```{r}
+spec_2d <- get_2d_spectrum(node_spectral_grid$point, start = "1994-01-01", end = "1994-02-28")
+str(spec_2d)
+```
+
+In addition, it is possible to plot the wave elevation directional spectra for any given time, which can be specified by the time index or directly the date:
+
+```{r,warning=FALSE, fig.height=8,fig.width=8}
+plot_2d_specta(spec_2d, "1994-01-15 18:00")
+```
+
+
