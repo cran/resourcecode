@@ -20,21 +20,28 @@
 #' if (requireNamespace("resourcecodedata", quietly = TRUE)) {
 #'   rscd_mapplot(resourcecodedata::rscd_field$depth)
 #' }
-rscd_mapplot <- function(z,
-                         name = "Depth (m)",
-                         zlim = NULL,
-                         palette = "YlOrRd",
-                         direction = 1,
-                         transform = "identity") {
+rscd_mapplot <- function(
+  z,
+  name = "Depth (m)",
+  zlim = NULL,
+  palette = "YlOrRd",
+  direction = 1,
+  transform = "identity"
+) {
   has_data()
 
   xyzgz <- tibble::tibble(
-    x = resourcecodedata::rscd_field$longitude[resourcecodedata::rscd_triangles],
+    x = resourcecodedata::rscd_field$longitude[
+      resourcecodedata::rscd_triangles
+    ],
     y = resourcecodedata::rscd_field$latitude[resourcecodedata::rscd_triangles],
     z = z[resourcecodedata::rscd_triangles],
-    g = rep(seq_len(ncol(
-      resourcecodedata::rscd_triangles
-    )), each = nrow(resourcecodedata::rscd_triangles))
+    g = rep(
+      seq_len(
+        ncol(resourcecodedata::rscd_triangles)
+      ),
+      each = nrow(resourcecodedata::rscd_triangles)
+    )
   )
 
   ggplot(
@@ -67,7 +74,7 @@ rscd_mapplot <- function(z,
     geom_path(
       data = resourcecodedata::rscd_coastline,
       aes(x = .data$longitude, y = .data$latitude),
-      linewidth = .2,
+      linewidth = 0.2,
       inherit.aes = FALSE
     ) +
     geom_path(
@@ -77,14 +84,17 @@ rscd_mapplot <- function(z,
         y = .data$latitude,
         group = .data$ID
       ),
-      linewidth = .2,
+      linewidth = 0.2,
       inherit.aes = FALSE
     ) +
     coord_sf(expand = FALSE, crs = sf::st_crs(4326)) +
     theme_void() +
+    labs(
+      caption = "Source: Resourcecode hindcast database\nresourcecode.ifremer.fr"
+    ) +
     theme(
       legend.position = "inside",
-      legend.position.inside = c(.8, 0.2),
+      legend.position.inside = c(0.8, 0.2),
       legend.margin = margin(
         t = 0,
         r = 0,
