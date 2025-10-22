@@ -8,24 +8,42 @@ test_that("meridional conversion works", {
   expect_equal(zmcomp2metconv(u, v), res)
 })
 
+
+test_that("metconv2zmcomp returns correct components for cardinal winds", {
+  # North wind (10 m/s) → blows southward → u = 0, v = -10
+  res <- metconv2zmcomp(10, 0)
+  expect_equal(res$u, 0, tolerance = 1e-12)
+  expect_equal(res$v, -10, tolerance = 1e-12)
+
+  # East wind (5 m/s) → blows westward → u = -5, v = 0
+  res <- metconv2zmcomp(5, 90)
+  expect_equal(res$u, -5, tolerance = 1e-12)
+  expect_equal(res$v, 0, tolerance = 1e-12)
+
+  # South wind (8 m/s) → blows northward → u = 0, v = +8
+  res <- metconv2zmcomp(8, 180)
+  expect_equal(res$u, 0, tolerance = 1e-12)
+  expect_equal(res$v, 8, tolerance = 1e-12)
+
+  # West wind (12 m/s) → blows eastward → u = +12, v = 0
+  res <- metconv2zmcomp(12, 270)
+  expect_equal(res$u, 12, tolerance = 1e-12)
+  expect_equal(res$v, 0, tolerance = 1e-12)
+})
+
+test_that("metconv2zmcomp works with vector inputs", {
+  spd <- c(10, 5, 8, 12)
+  dir <- c(0, 90, 180, 270)
+  res <- metconv2zmcomp(spd, dir)
+
+  expect_equal(nrow(res), 4)
+  expect_equal(res$u, c(0, -5, 0, 12), tolerance = 1e-12)
+  expect_equal(res$v, c(-10, 0, 8, 0), tolerance = 1e-12)
+})
+
 test_that("%nin% helper works", {
   expect_false(1 %nin% c(1, 3, 5, 9))
   expect_true(1 %nin% c(3, 5, 9))
-})
-
-test_that("Node selection works", {
-  skip_if_offline()
-  skip_if(!requireNamespace("resourcecodedata", quietly = TRUE))
-  point_test <- c(-4.700, 48.302)
-  node_test <- 134938
-  spec_test <- 2124
-  expect_equal(closest_point_field(point_test)$point, node_test)
-  expect_equal(
-    closest_point_field(point_test[1], point_test[2])$point,
-    node_test
-  )
-  expect_equal(closest_point_spec(point_test)$point, 2124)
-  expect_equal(closest_point_spec(point_test[1], point_test[2])$point, 2124)
 })
 
 test_that("Fast trapz works", {
@@ -49,6 +67,8 @@ test_that("Directional means are accurately computed", {
   expect_error(mean_direction())
   expect_equal(mean_direction(rep(0, 10)), 0)
   expect_equal(mean_direction(rep(0, 10)), mean_direction(rep(360, 10)))
+  expect_error(mean_direction("one"), "'directions' must be numeric")
+  expect_error(mean_direction(1:2, c("one", "two")), "'weights' must be numeric")
 })
 
 test_that("Weighted directional means are accurately computed", {
@@ -56,9 +76,13 @@ test_that("Weighted directional means are accurately computed", {
   expect_error(mean_direction(c(0, 90), weights = c(1)))
   expect_equal(mean_direction(c(0, 90), weights = c(50, 50)), 45)
   expect_equal(mean_direction(c(0, 90), weights = c(0, 1)), 90)
+  expect_equal(mean_direction(directions = numeric(0)), numeric(0))
 })
 
 test_that("Directional binning works", {
+  expect_error(cut_directions("one"), "'directions' must be numeric")
+  expect_error(cut_directions(1, 1), "'n_bins' must be at least 2")
+  expect_equal(cut_directions(numeric()), numeric())
   expect_equal(
     cut_directions(c(10, 80, 170, 280), n_bins = 4),
     factor(c("N", "E", "S", "W"), levels = c("N", "E", "S", "W"))

@@ -1,6 +1,17 @@
-# resourcecode 0.3.0
+# resourcecode 0.4.0
 
-# resourcecode 0.2.2
+- New example data: `rscd_data_example` with an extract of some variables at a given node.
+  See `?rscd_data_example` for details.
+- New helper: `fractional_day_of_year()` to compute the fractional time since
+  the beginning of a year.
+- New function `plot_1d_specta()` to plot 1D spectral data, with sea-states parameters.
+- New function `metconv2zmcomp()` to compute the u/v components.
+  from meteorological wind speed and direction.
+- Adds `{resourcecodedata}` package as dependence, to ease the use of the package .
+- `closest_point_field()` and `closest_point_field()` now accept a list of locations
+  instead of a single one (#3).
+
+# resourcecode 0.3.0
 
 - `rscd_mapplot()`: add Resourcecode caption.
 - New helpers:

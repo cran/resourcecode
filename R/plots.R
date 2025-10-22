@@ -13,23 +13,16 @@
 #' @return a ggplot2 object
 #' @export
 #'
-#' @examples
-#' # Ensure that data package is available before running the example.
-#' # If it is not, see the `resourcecode` package vignette for details
-#' # on installing the required data package.
-#' if (requireNamespace("resourcecodedata", quietly = TRUE)) {
-#'   rscd_mapplot(resourcecodedata::rscd_field$depth)
-#' }
+#' @examplesIf identical(tolower(Sys.getenv("NOT_CRAN")), "true")
+#' rscd_mapplot(resourcecodedata::rscd_field$depth)
+#'
 rscd_mapplot <- function(
-  z,
-  name = "Depth (m)",
-  zlim = NULL,
-  palette = "YlOrRd",
-  direction = 1,
-  transform = "identity"
-) {
-  has_data()
-
+    z,
+    name = "Depth (m)",
+    zlim = NULL,
+    palette = "YlOrRd",
+    direction = 1,
+    transform = "identity") {
   xyzgz <- tibble::tibble(
     x = resourcecodedata::rscd_field$longitude[
       resourcecodedata::rscd_triangles

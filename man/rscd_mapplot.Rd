@@ -36,10 +36,7 @@ a ggplot2 object
 Create a map of the provided variable on the RESOURCECODE field grid
 }
 \examples{
-# Ensure that data package is available before running the example.
-# If it is not, see the `resourcecode` package vignette for details
-# on installing the required data package.
-if (requireNamespace("resourcecodedata", quietly = TRUE)) {
-  rscd_mapplot(resourcecodedata::rscd_field$depth)
-}
+\dontshow{if (identical(tolower(Sys.getenv("NOT_CRAN")), "true")) withAutoprint(\{ # examplesIf}
+rscd_mapplot(resourcecodedata::rscd_field$depth)
+\dontshow{\}) # examplesIf}
 }

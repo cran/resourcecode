@@ -64,49 +64,44 @@ dispersion <- function(frequencies, depth, iter_max = 200, tol = 1e-6) {
 #' @export
 #'
 #' @examples
-#' # Ensure that data package is available before running the example.
-#' #  If it is not, see the `resourcecode` package vignette for details
-#' # on installing the required data package.
-#' if (requireNamespace("resourcecodedata", quietly = TRUE)) {
-#'   spec <- resourcecodedata::rscd_2d_spectra
-#'   spec1D_RSCD <- resourcecodedata::rscd_1d_spectra
-#'   spec1D <- convert_spectrum_2d1d(spec)
-#'   # Check the differences, should be low
-#'   max(abs(spec1D_RSCD$ef - spec1D$ef))
+#' spec <- resourcecodedata::rscd_2d_spectra
+#' spec1D_RSCD <- resourcecodedata::rscd_1d_spectra
+#' spec1D <- convert_spectrum_2d1d(spec)
+#' # Check the differences, should be low
+#' max(abs(spec1D_RSCD$ef - spec1D$ef))
 #'
-#'   # Plot the different spectrum
-#'   plot(spec1D$freq, spec1D$ef[, 1], type = "l", log = "xy")
-#'   lines(spec1D_RSCD$freq, spec1D_RSCD$ef[, 1], col = "red")
+#' # Plot the different spectrum
+#' plot(spec1D$freq, spec1D$ef[, 1], type = "l", log = "xy")
+#' lines(spec1D_RSCD$freq, spec1D_RSCD$ef[, 1], col = "red")
 #'
-#'   # Images
-#'   lims <- c(0, 360)
-#'   r <- as.POSIXct(round(range(spec1D$forcings$time), "hours"))
-#'   oldpar <- par(mfcol = c(2, 1))
-#'   image(spec1D$forcings$time, spec1D$freq, t(spec1D$th1m),
-#'     zlim = lims,
-#'     xlab = "Time",
-#'     ylab = "Freq (Hz)",
-#'     xaxt = "n",
-#'     main = "Directionnal spreading"
-#'   )
-#'   axis.POSIXct(1, spec1D$forcings$time,
-#'     at = seq(r[1], r[2], by = "week"),
-#'     format = "%Y-%m-%d",
-#'     las = 2
-#'   )
-#'   image(spec1D_RSCD$forcings$time, spec1D_RSCD$freq, t(spec1D_RSCD$th1m),
-#'     zlim = lims,
-#'     xlab = "Time",
-#'     ylab = "Freq (Hz)",
-#'     xaxt = "n"
-#'   )
-#'   axis.POSIXct(1, spec1D$forcings$time,
-#'     at = seq(r[1], r[2], by = "week"),
-#'     format = "%Y-%m-%d",
-#'     las = 2
-#'   )
-#'   par(oldpar)
-#' }
+#' # Images
+#' lims <- c(0, 360)
+#' r <- as.POSIXct(round(range(spec1D$forcings$time), "hours"))
+#' oldpar <- par(mfcol = c(2, 1))
+#' image(spec1D$forcings$time, spec1D$freq, t(spec1D$th1m),
+#'   zlim = lims,
+#'   xlab = "Time",
+#'   ylab = "Freq (Hz)",
+#'   xaxt = "n",
+#'   main = "Directionnal spreading"
+#' )
+#' axis.POSIXct(1, spec1D$forcings$time,
+#'   at = seq(r[1], r[2], by = "week"),
+#'   format = "%Y-%m-%d",
+#'   las = 2
+#' )
+#' image(spec1D_RSCD$forcings$time, spec1D_RSCD$freq, t(spec1D_RSCD$th1m),
+#'   zlim = lims,
+#'   xlab = "Time",
+#'   ylab = "Freq (Hz)",
+#'   xaxt = "n"
+#' )
+#' axis.POSIXct(1, spec1D$forcings$time,
+#'   at = seq(r[1], r[2], by = "week"),
+#'   format = "%Y-%m-%d",
+#'   las = 2
+#' )
+#' par(oldpar)
 convert_spectrum_2d1d <- function(spec, ...) {
   ddir <- diff(spec$dir)[1] * pi / 180 # computes the discretization in direction
 
@@ -156,30 +151,25 @@ convert_spectrum_2d1d <- function(spec, ...) {
 #' @return a tibble with the sea-state parameters computed from the time series of 2D spectrum
 #' @export
 #'
-#' @examples
-#' # Ensure that data package is available before running the example.
-#' #  If it is not, see the `resourcecode` package vignette for details
-#' # on installing the required data package.
-#' if (requireNamespace("resourcecodedata", quietly = TRUE)) {
-#'   rscd_params <- get_parameters(
-#'     node = "134865",
-#'     start = "1994-01-01",
-#'     end = "1994-01-31 23:00:00",
-#'     parameters = c("hs", "tp", "cge", "t01", "dp", "dir")
-#'   )
-#'   spec <- resourcecodedata::rscd_2d_spectra
-#'   param_calc <- compute_sea_state_2d_spectrum(spec)
-#'   oldpar <- par(mfcol = c(2, 2))
-#'   plot(param_calc$time, param_calc$hs, type = "l", xlab = "Time", ylab = "Hs (m)")
-#'   lines(rscd_params$time, rscd_params$hs, col = "red")
-#'   plot(param_calc$time, param_calc$cge, type = "l", xlab = "Time", ylab = "CgE (kW/m)")
-#'   lines(rscd_params$time, rscd_params$cge, col = "red")
-#'   plot(param_calc$time, param_calc$tp, type = "l", xlab = "Time", ylab = "Tp (s)")
-#'   lines(rscd_params$time, rscd_params$tp, col = "red")
-#'   plot(param_calc$time, param_calc$dp, type = "l", xlab = "Time", ylab = "Dp (°)")
-#'   lines(rscd_params$time, rscd_params$dp, col = "red")
-#'   par(oldpar)
-#' }
+#' @examplesIf identical(tolower(Sys.getenv("NOT_CRAN")), "true")
+#' rscd_params <- get_parameters(
+#'   node = "134865",
+#'   start = "1994-01-01",
+#'   end = "1994-01-31 23:00:00",
+#'   parameters = c("hs", "tp", "cge", "t01", "dp", "dir")
+#' )
+#' spec <- resourcecodedata::rscd_2d_spectra
+#' param_calc <- compute_sea_state_2d_spectrum(spec)
+#' oldpar <- par(mfcol = c(2, 2))
+#' plot(param_calc$time, param_calc$hs, type = "l", xlab = "Time", ylab = "Hs (m)")
+#' lines(rscd_params$time, rscd_params$hs, col = "red")
+#' plot(param_calc$time, param_calc$cge, type = "l", xlab = "Time", ylab = "CgE (kW/m)")
+#' lines(rscd_params$time, rscd_params$cge, col = "red")
+#' plot(param_calc$time, param_calc$tp, type = "l", xlab = "Time", ylab = "Tp (s)")
+#' lines(rscd_params$time, rscd_params$tp, col = "red")
+#' plot(param_calc$time, param_calc$dp, type = "l", xlab = "Time", ylab = "Dp (°)")
+#' lines(rscd_params$time, rscd_params$dp, col = "red")
+#' par(oldpar)
 compute_sea_state_2d_spectrum <- function(spec, ...) {
   # Define an internal function that will do the job for a time-step
   # spectrum: 1D spectrum
@@ -324,29 +314,24 @@ compute_sea_state_2d_spectrum <- function(spec, ...) {
 #' @export
 #'
 #' @examples
-#' # Ensure that data package is available before running the example.
-#' #  If it is not, see the `resourcecode` package vignette for details
-#' # on installing the required data package.
-#' if (requireNamespace("resourcecodedata", quietly = TRUE)) {
-#'   rscd_params <- get_parameters(
-#'     node = "134865",
-#'     start = "1994-01-01",
-#'     end = "1994-01-31 23:00:00",
-#'     parameters = c("hs", "tp", "cge", "t01", "dp", "dir")
-#'   )
-#'   spec <- resourcecodedata::rscd_1d_spectra
-#'   param_calc <- compute_sea_state_1d_spectrum(spec)
-#'   oldpar <- par(mfcol = c(2, 2))
-#'   plot(param_calc$time, param_calc$hs, type = "l", xlab = "Time", ylab = "Hs (m)")
-#'   lines(rscd_params$time, rscd_params$hs, col = "red")
-#'   plot(param_calc$time, param_calc$cge, type = "l", xlab = "Time", ylab = "CgE (kW/m)")
-#'   lines(rscd_params$time, rscd_params$cge, col = "red")
-#'   plot(param_calc$time, param_calc$tp, type = "l", xlab = "Time", ylab = "Tp (s)")
-#'   lines(rscd_params$time, rscd_params$tp, col = "red")
-#'   plot(param_calc$time, param_calc$dp, type = "l", xlab = "Time", ylab = "Peak direction (°)")
-#'   lines(rscd_params$time, rscd_params$dp, col = "red")
-#'   par(oldpar)
-#' }
+#' rscd_params <- get_parameters(
+#'   node = "134865",
+#'   start = "1994-01-01",
+#'   end = "1994-01-31 23:00:00",
+#'   parameters = c("hs", "tp", "cge", "t01", "dp", "dir")
+#' )
+#' spec <- resourcecodedata::rscd_1d_spectra
+#' param_calc <- compute_sea_state_1d_spectrum(spec)
+#' oldpar <- par(mfcol = c(2, 2))
+#' plot(param_calc$time, param_calc$hs, type = "l", xlab = "Time", ylab = "Hs (m)")
+#' lines(rscd_params$time, rscd_params$hs, col = "red")
+#' plot(param_calc$time, param_calc$cge, type = "l", xlab = "Time", ylab = "CgE (kW/m)")
+#' lines(rscd_params$time, rscd_params$cge, col = "red")
+#' plot(param_calc$time, param_calc$tp, type = "l", xlab = "Time", ylab = "Tp (s)")
+#' lines(rscd_params$time, rscd_params$tp, col = "red")
+#' plot(param_calc$time, param_calc$dp, type = "l", xlab = "Time", ylab = "Peak direction (°)")
+#' lines(rscd_params$time, rscd_params$dp, col = "red")
+#' par(oldpar)
 compute_sea_state_1d_spectrum <- function(spec, ...) {
   water_density <- 1026
   g <- 9.81

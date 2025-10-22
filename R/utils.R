@@ -25,28 +25,46 @@
 #' @export
 #'
 #' @examples
-#' # Ensure that data package is available before running the example.
-#' #  If it is not, see the `resourcecode` package vignette for details
-#' # on installing the required data package.
-#' if (requireNamespace("resourcecodedata", quietly = TRUE)) {
-#'   semrev_west <- closest_point_field(c(-2.786, 47.239))
-#'   semrev_west
-#' }
+#' semrev_west <- closest_point_field(c(-2.786, 47.239))
+#' semrev_west
 closest_point_field <- function(x, lat = NULL, closest = 1L, ...) {
-  has_data()
-
   if (!is.null(lat)) {
-    stopifnot(length(x) == length(lat))
-    return(closest_point_field(cbind(x, lat)))
+    if (!(length(x) == length(lat))) {
+      stop("If 'lat' is provided, it sould be the same length as 'x'.")
+    }
+    return(closest_point_field(cbind(x, lat), lat = NULL, closest = closest, ...))
   }
 
-  stopifnot(is.integer(closest) & closest >= 1L)
-  dist <- geosphere::distGeo(x, resourcecodedata::rscd_field[, c(2, 3)])
-  ind_min <- order(dist)[1:closest]
+  # Concert the input to a matrix with 2 columns, one point per line
+  x <- matrix(x, ncol = 2)
+
+  if (!is.numeric(closest) || closest < 1L) {
+    stop("'closest' must be an integer greater than 1.")
+  }
+
+  # Compute the distance matrix between the points and Resourcecode's grid
+  dist <- geosphere::distm(x, resourcecodedata::rscd_field[, c(2, 3)])
+
+  if (closest == 1L) {
+    ind_min <- apply(dist, 1, which.min)
+  } else {
+    ind_min <- apply(dist, 1, function(distances) {
+      order(distances)[1:closest]
+    })
+  }
+
+  distance <- matrix(NA, NROW(x), closest)
+  for (p in seq_len(NROW(x))) {
+    distance[p, ] <- if (closest == 1) {
+      dist[p, ind_min[p]]
+    } else {
+      dist[p, ind_min[, p]]
+    }
+  }
 
   return(list(
-    point = ind_min,
-    distance = dist[ind_min]
+    points = t(ind_min),
+    distances = distance
   ))
 }
 
@@ -60,28 +78,51 @@ closest_point_field <- function(x, lat = NULL, closest = 1L, ...) {
 #' @return a list with two components: the closest point(s) of the grid and the distance (s).
 #' @export
 #'
-#' @examplesIf requireNamespace("resourcecodedata", quietly = TRUE)
+#' @examples
 #' semrev_west <- closest_point_spec(c(-2.786, 47.239))
 #' semrev_west
 closest_point_spec <- function(x, lat = NULL, closest = 1L, ...) {
-  has_data()
-
   if (!is.null(lat)) {
-    stopifnot(length(x) == length(lat))
-    return(closest_point_spec(cbind(x, lat)))
+    if (!(length(x) == length(lat))) {
+      stop("If 'lat' is provided, it sould be the same length as 'x'.")
+    }
+    return(closest_point_spec(cbind(x, lat), lat = NULL, closest = closest, ...))
   }
 
-  stopifnot(is.integer(closest) & closest >= 1L)
-  dist <- geosphere::distGeo(x, resourcecodedata::rscd_spectral[, c(1, 2)])
-  ind_min <- order(dist)[1:closest]
+  # Concert the input to a matrix with 2 columns, one point per line
+  x <- matrix(x, ncol = 2)
+
+  if (!is.numeric(closest) || closest < 1L) {
+    stop("'closest' must be an integer greater than 1.")
+  }
+
+  # Compute the distance matrix between the points and Resourcecode's grid
+  dist <- geosphere::distm(x, resourcecodedata::rscd_spectral[, c(1, 2)])
+
+  if (closest == 1L) {
+    ind_min <- apply(dist, 1, which.min)
+  } else {
+    ind_min <- apply(dist, 1, function(distances) {
+      order(distances)[1:closest]
+    })
+  }
+
+  distance <- matrix(NA, NROW(x), closest)
+  for (p in seq_len(NROW(x))) {
+    distance[p, ] <- if (closest == 1) {
+      dist[p, ind_min[p]]
+    } else {
+      dist[p, ind_min[, p]]
+    }
+  }
 
   return(list(
-    point = ind_min,
-    distance = dist[ind_min]
+    points = t(ind_min),
+    distances = distance
   ))
 }
 
-#' Vector conversion
+#' Convert u/v to meteorological wind speed and direction
 #'
 #' Converts wind or current zonal and meridional velocity components to
 #' magnitude and direction according to meteorological convention.
@@ -110,6 +151,50 @@ zmcomp2metconv <- function(u, v = NULL, names = c("wspd", "wdir")) {
   names(out) <- names
   return(out)
 }
+
+#' Convert meteorological wind speed and direction to u/v components
+#'
+#' @description
+#' Converts wind speed (magnitude) and direction (in degrees, meteorological
+#' convention: direction from which the wind blows, measured clockwise from north)
+#' into zonal (u) and meridional (v) components.
+#'
+#' @param speed Numeric vector of wind speeds.
+#' @param direction Numeric vector of wind directions in degrees (0° = from north,
+#' 90° = from east, 180° = from south, 270° = from west).
+#' @param names (optional) ames to construct the resulting data.frame.
+#'
+#' @return A data.frame with two columns:
+#' \describe{
+#'   \item{u}{Zonal wind component (m/s), positive eastward.}
+#'   \item{v}{Meridional wind component (m/s), positive northward.}
+#' }
+#'
+#' @examples
+#' # Example 1: North wind of 10 m/s (blowing southward)
+#' metconv2zmcomp(10, 0)
+#'
+#' # Example 2: East wind of 5 m/s (blowing westward)
+#' metconv2zmcomp(5, 90)
+#'
+#' # Example 3: South wind of 8 m/s (blowing northward)
+#' metconv2zmcomp(8, 180)
+#'
+#' @export
+metconv2zmcomp <- function(speed, direction, names = c("uwnd", "vwnd")) {
+  # Convert to radians
+  dir_rad <- direction * pi / 180
+
+  # Components
+  u <- -speed * sin(dir_rad)
+  v <- -speed * cos(dir_rad)
+
+  out <- data.frame(u = u, v = v)
+  names(out) <- names
+  out
+}
+
+
 
 #' JONWSAP spectrum
 #'
@@ -159,7 +244,7 @@ jonswap <- function(hs = 5, tp = 15, fmax = rscd_freq, df = NULL, gam = 3.3) {
   }
   nptsp <- length(frq)
 
-  #Stops if the Gamma parameter is lower than 1
+  # Stops if the Gamma parameter is lower than 1
   if (gam < 1) {
     stop("Gamma parameter `gam` should be greater than 1")
   }
@@ -225,10 +310,18 @@ jonswap <- function(hs = 5, tp = 15, fmax = rscd_freq, df = NULL, gam = 3.3) {
 #' mean_dir_unweighted <- mean_direction(wind_directions)
 #' cat("Same data unweighted:", round(mean_dir_unweighted, 1), "degrees\n")
 mean_direction <- function(directions, weights = NULL) {
+  # Verify that directions are numeric
+  if (!is.numeric(directions)) {
+    stop("'directions' must be numeric")
+  }
   # If weights provided, check they have the same length as directions
   if (!is.null(weights)) {
     if (length(directions) != length(weights)) {
       stop("Length of 'directions' and 'speeds' must be equal")
+    }
+    # Verify that weights are numeric
+    if (!is.numeric(weights)) {
+      stop("'weights' must be numeric")
     }
     valid_indices <- !is.na(directions) & !is.na(weights)
     directions <- directions[valid_indices]
@@ -237,6 +330,7 @@ mean_direction <- function(directions, weights = NULL) {
     # Remove NA values from directions only
     directions <- directions[!is.na(directions)]
   }
+
 
   # Check for negative weights (which would cause issues with weighting)
   if (any(weights < 0)) {
@@ -249,7 +343,7 @@ mean_direction <- function(directions, weights = NULL) {
 
   # Check if we have any valid directions
   if (length(directions) == 0) {
-    return(NA)
+    return(numeric(0))
   }
 
   # Set default weights (equal weighting) if weights not provided
@@ -314,11 +408,15 @@ mean_direction <- function(directions, weights = NULL) {
 cut_directions <- function(directions, n_bins = 8, labels = NULL) {
   # Validate inputs
   if (!is.numeric(directions)) {
-    stop("directions must be numeric")
+    stop("'directions' must be numeric")
+  }
+
+  if (length(directions) == 0) {
+    return(numeric(0))
   }
 
   if (n_bins < 2) {
-    stop("n_bins must be at least 2")
+    stop("'n_bins' must be at least 2")
   }
 
   # Normalize directions to 0-360 range
@@ -409,22 +507,25 @@ cut_directions <- function(directions, n_bins = 8, labels = NULL) {
 #'   - amj, jas, ond: Alternative starting points for quarterly seasons
 #'
 #' @examples
-#' dates = seq(from = as.POSIXct("2023-01-15"),
-#'             to = as.POSIXct("2023-12-15"),
-#'             by = "month")
+#' dates <- seq(
+#'   from = as.POSIXct("2023-01-15"),
+#'   to = as.POSIXct("2023-12-15"),
+#'   by = "month"
+#' )
 #' cut_seasons(dates)
 cut_seasons <- function(datetime,
                         definition = "meteorological",
                         hemisphere = "northern",
                         labels = NULL) {
-
   # Validate inputs
   if (!inherits(datetime, "POSIXct")) {
     stop("datetime must be a POSIXct object")
   }
 
-  if (!definition %in% c("meteorological", "astronomical",
-                         "djf", "jfm", "amj", "jas", "ond", "fma")) {
+  if (!definition %in% c(
+    "meteorological", "astronomical",
+    "djf", "jfm", "amj", "jas", "ond", "fma"
+  )) {
     stop("definition must be one of: 'meteorological', 'astronomical',
          'djf', 'jfm', 'amj', 'jas', 'ond', 'fma'")
   }
@@ -442,10 +543,11 @@ cut_seasons <- function(datetime,
   if (definition == "meteorological") {
     # Dec-Jan-Feb = Winter, Mar-Apr-May = Spring, etc.
     season_month <- c(12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-    season_labels <- c("Winter", "Winter", "Winter", "Spring", "Spring", "Spring",
-                       "Summer", "Summer", "Summer", "Autumn", "Autumn", "Autumn")
+    season_labels <- c(
+      "Winter", "Winter", "Winter", "Spring", "Spring", "Spring",
+      "Summer", "Summer", "Summer", "Autumn", "Autumn", "Autumn"
+    )
     seasons <- season_labels[match(month, season_month)]
-
   } else if (definition == "astronomical") {
     # Based on equinoxes and solstices (approximate dates)
     # Northern hemisphere: Dec 21 - Mar 20 = Winter, etc.
@@ -471,54 +573,62 @@ cut_seasons <- function(datetime,
         seasons[i] <- "Autumn"
       }
     }
-
   } else if (definition == "djf") {
     # Dec-Jan-Feb, Mar-Apr-May, Jun-Jul-Aug, Sep-Oct-Nov
     season_month <- c(12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-    season_labels <- c("DJF", "DJF", "DJF", "MAM", "MAM", "MAM",
-                       "JJA", "JJA", "JJA", "SON", "SON", "SON")
+    season_labels <- c(
+      "DJF", "DJF", "DJF", "MAM", "MAM", "MAM",
+      "JJA", "JJA", "JJA", "SON", "SON", "SON"
+    )
     seasons <- season_labels[match(month, season_month)]
-
   } else if (definition == "jfm") {
     # Jan-Feb-Mar, Apr-May-Jun, Jul-Aug-Sep, Oct-Nov-Dec
     season_month <- 1:12
-    season_labels <- c("JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
-                       "JAS", "JAS", "JAS", "OND", "OND", "OND")
+    season_labels <- c(
+      "JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
+      "JAS", "JAS", "JAS", "OND", "OND", "OND"
+    )
     seasons <- season_labels[match(month, season_month)]
-
   } else if (definition == "amj") {
     # Apr-May-Jun, Jul-Aug-Sep, Oct-Nov-Dec, Jan-Feb-Mar
     season_month <- 1:12
-    season_labels <- c("JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
-                       "JAS", "JAS", "JAS", "OND", "OND", "OND")
+    season_labels <- c(
+      "JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
+      "JAS", "JAS", "JAS", "OND", "OND", "OND"
+    )
     seasons <- season_labels[match(month, season_month)]
-
   } else if (definition == "jas") {
     # Jul-Aug-Sep, Oct-Nov-Dec, Jan-Feb-Mar, Apr-May-Jun
     season_month <- 1:12
-    season_labels <- c("JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
-                       "JAS", "JAS", "JAS", "OND", "OND", "OND")
+    season_labels <- c(
+      "JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
+      "JAS", "JAS", "JAS", "OND", "OND", "OND"
+    )
     seasons <- season_labels[match(month, season_month)]
-
   } else if (definition == "ond") {
     # Oct-Nov-Dec, Jan-Feb-Mar, Apr-May-Jun, Jul-Aug-Sep
     season_month <- 1:12
-    season_labels <- c("JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
-                       "JAS", "JAS", "JAS", "OND", "OND", "OND")
+    season_labels <- c(
+      "JFM", "JFM", "JFM", "AMJ", "AMJ", "AMJ",
+      "JAS", "JAS", "JAS", "OND", "OND", "OND"
+    )
     seasons <- season_labels[match(month, season_month)]
-
   } else if (definition == "fma") {
     # Feb-Mar-Apr, May-Jun-Jul, Aug-Sep-Oct, Nov-Dec-Jan
     season_month <- 1:12
-    season_labels <- c("NDJ", "FMA", "FMA", "FMA", "MJJ", "MJJ",
-                       "MJJ", "ASO", "ASO", "ASO", "NDJ", "NDJ")
+    season_labels <- c(
+      "NDJ", "FMA", "FMA", "FMA", "MJJ", "MJJ",
+      "MJJ", "ASO", "ASO", "ASO", "NDJ", "NDJ"
+    )
     seasons <- season_labels[match(month, season_month)]
   }
 
   # Flip seasons for southern hemisphere
   if (hemisphere == "southern" && definition %in% c("meteorological", "astronomical")) {
-    season_mapping <- c("Spring" = "Autumn", "Summer" = "Winter",
-                        "Autumn" = "Spring", "Winter" = "Summer")
+    season_mapping <- c(
+      "Spring" = "Autumn", "Summer" = "Winter",
+      "Autumn" = "Spring", "Winter" = "Summer"
+    )
     seasons <- season_mapping[seasons]
   }
 
@@ -527,7 +637,9 @@ cut_seasons <- function(datetime,
     unique_seasons <- unique(seasons[!is.na(seasons)])
     if (length(labels) != length(unique_seasons)) {
       stop(paste("Number of labels (", length(labels),
-                 ") must match number of unique seasons (", length(unique_seasons), ")", sep = ""))
+        ") must match number of unique seasons (", length(unique_seasons), ")",
+        sep = ""
+      ))
     }
     # Create mapping from old to new labels
     label_mapping <- stats::setNames(labels, sort(unique_seasons))
@@ -548,7 +660,7 @@ cut_seasons <- function(datetime,
   } else if (definition == "fma") {
     level_order <- c("FMA", "MJJ", "ASO", "NDJ")
   } else {
-    level_order <- c("JFM", "AMJ", "JAS", "OND")  # Default for amj, jas, ond
+    level_order <- c("JFM", "AMJ", "JAS", "OND") # Default for amj, jas, ond
   }
 
   # Apply custom labels to level order if provided
@@ -558,4 +670,72 @@ cut_seasons <- function(datetime,
 
   result <- factor(seasons, levels = level_order)
   return(result)
+}
+
+#' Compute Fractional Day of Year from POSIXct
+#'
+#' Calculates the fractional day of year from a POSIXct datetime object.
+#' The fractional day is zero-indexed, starting at 0 for January 1st at
+#' midnight and ending at approximately 365.958 for December 31st at 23:00
+#' in a non-leap year (or 366.958 in a leap year).
+#'
+#' @param datetime A POSIXct object or vector of POSIXct objects representing
+#'   date-time values. Must have a timezone attribute.
+#'
+#' @return A numeric vector of the same length as \code{datetime}, containing
+#'   fractional day of year values. January 1st at midnight corresponds to 0,
+#'   and each hour adds approximately 0.04167 (1/24) to the value.
+#'
+#' @details
+#' The function computes the time difference in hours between the input
+#' datetime and midnight on January 1st of the same year, then divides by 24
+#' to obtain fractional days. The calculation accounts for leap years
+#' automatically.
+#'
+#' @examples
+#' dates <- seq(
+#'   from = as.POSIXct("2024-01-01 00:00:00", tz = "UTC"),
+#'   to = as.POSIXct("2024-01-02 00:00:00", tz = "UTC"),
+#'   by = "6 hours"
+#' )
+#' fractional_day_of_year(dates) # Returns 0.00, 0.25, 0.50, 0.75, 1.00
+#'
+#' # End of year
+#' dt_end <- as.POSIXct("2024-12-31 23:00:00", tz = "UTC")
+#' fractional_day_of_year(dt_end) # Returns ~365.958
+#'
+#' @export
+fractional_day_of_year <- function(datetime) {
+  # Input validation
+  if (!inherits(datetime, "POSIXct")) {
+    stop("datetime must be a POSIXct object")
+  }
+
+  # Extract timezone (defaults to UTC if missing)
+  tz <- attr(datetime, "tzone")
+  if (is.null(tz) || tz == "") tz <- "UTC"
+
+  # Get the year for each datetime
+  year <- as.POSIXlt(datetime, tz = tz)$year + 1900
+
+  # Initialize output
+  fractional_day <- rep(NA_real_, length(datetime))
+
+  # Process only non-NA entries
+  valid <- !is.na(datetime)
+  if (any(valid)) {
+    # Start of the year in same timezone
+    start_of_year <- as.POSIXct(
+      paste0(year[valid], "-01-01 00:00:00"),
+      tz = tz
+    )
+
+    # Compute time difference in hours
+    hours_diff <- as.numeric(difftime(datetime[valid], start_of_year, units = "hours"))
+
+    # Convert to fractional days
+    fractional_day[valid] <- hours_diff / 24
+  }
+
+  fractional_day
 }
