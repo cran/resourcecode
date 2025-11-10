@@ -1,3 +1,10 @@
+# resourcecode 0.5.0
+
+- Update the data retrieving function to fail gracefully
+whenever the remote database is not accessible.
+- New function 'weather_windows()' to compute weather windows of a given duration.
+- Update the ending date of the Hindcast to 2024-12-31.
+
 # resourcecode 0.4.0
 
 - New example data: `rscd_data_example` with an extract of some variables at a given node.
