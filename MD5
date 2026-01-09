@@ -1,6 +1,6 @@
-31e6526f00c11db16b816938f2fe19f8 *DESCRIPTION
+67a28c02d27dc013a04a333da3cc2e8a *DESCRIPTION
 8668ee290ad637b36e53c3572c0e70d2 *NAMESPACE
-c83846179ef2a006e1a9dc3751095fe2 *NEWS.md
+17017e9960790d0962617b935a47ddd5 *NEWS.md
 cdc6eaf7d2bdc6355a348361706a4872 *R/RcppExports.R
 1bef77f17235d54e474e8cb561de56b4 *R/data.R
 cb780cee6cf16d79997fd250eb0154f1 *R/download_data.R
@@ -8,8 +8,8 @@ f91a2cd5f90646d15ca7716331bbf3cd *R/orbital_speed.R
 0d624e1d95ebc4def47311127547b9f5 *R/plots.R
 9b1c789a87c940a467459022f4cb8275 *R/resourcecode-package.R
 b7028bc8a175259f998b3606d5b3babd *R/specta_data_ploting.R
-1718a87e252fc6b151a6d8db5c8b633d *R/specta_data_processing.R
-40b9c6cd64b47b9acf55d2ec6b45d01d *R/spectral_data_download.R
+25f3a4e601f225f5698860c3a9c4a8e1 *R/specta_data_processing.R
+b1d139236c8ae5688229edcb5c33ef1f *R/spectral_data_download.R
 a27dfb1a318cb39117f473676e42f5ed *R/sysdata.rda
 f2dfc9968ebfc4dffc648aba32ecc5cc *R/utils.R
 d307e31d1353dc2d019df901a16fee91 *R/weather_windows.R
@@ -26,8 +26,8 @@ c46097b0547c6320e8b8682628b76674 *inst/doc/resourcecode.html
 5d7e549d3386e80244cec49943229888 *man/closest_point_field.Rd
 6fcc9290effd55a87df18fcf8801af74 *man/closest_point_spec.Rd
 fab5a1c30dd7c8b7d200f84c64afe3e7 *man/compute_orbital_speeds.Rd
-9746f9e0a9c3d642965ddd302a8f840e *man/compute_sea_state_1d_spectrum.Rd
-2f8fc291a2518d3cd702f5818fec46ff *man/compute_sea_state_2d_spectrum.Rd
+a1982ea558c83bd29427f977a48d5c98 *man/compute_sea_state_1d_spectrum.Rd
+f3216ac66a0dd86689daa02179446de8 *man/compute_sea_state_2d_spectrum.Rd
 8fd2f14e8b543f106bb3866123151772 *man/convert_spectrum_2d1d.Rd
 8ae8fd00d25ce6417a36c1d4a2f87463 *man/cut_directions.Rd
 0fc6e5a7871dc147614efb00331e8dfb *man/cut_seasons.Rd
@@ -59,11 +59,11 @@ ef7471576cebe849552e3b25121bf67c *src/Makevars.win
 002059474b2ded35575f4477e9b9afc0 *src/fast_trapz.cpp
 af19d13388da526b40fd22797d5a31e8 *src/ww_calc_cpp.cpp
 da6b7278c6d1f19413cbb1e0b513fbcd *tests/testthat.R
-4537988e4c99d8cec65a662b58a48822 *tests/testthat/Rplots.pdf
-2caa2399adc6ddda2dfbc253df32728c *tests/testthat/test-data_download.R
+706251e987d81041002701136d2d293a *tests/testthat/Rplots.pdf
+d1bcb4cfeacdc4f18a191789ddb8bde2 *tests/testthat/test-data_download.R
 1a9f6da64828607a36fcee22b0924d24 *tests/testthat/test-fractional_day_of_year.R
-b5df959ac36b68371134afbd30c32325 *tests/testthat/test-orbital_speed.R
-4fc352ae2947ef98ca6a168bab425538 *tests/testthat/test-plots.R
+34cf945fd1428aa7c6615a4d5757c638 *tests/testthat/test-orbital_speed.R
+bf4df1d9abdb015e067380e8c45fe728 *tests/testthat/test-plots.R
 55f0f97525416303eb8e56bbd9303067 *tests/testthat/test-spectral_data_processing.R
 9038cea08178763534bd4baff54bd483 *tests/testthat/test-test_closest_point.R
 4e1b9983bf98b9075e5e93fad7e203d7 *tests/testthat/test-test_cut_seasons.R
