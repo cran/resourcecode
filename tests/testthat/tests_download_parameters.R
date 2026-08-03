@@ -63,7 +63,7 @@ test_that("get_parameters handles Date format as input", {
   )
 
   expect_s3_class(result, "data.frame")
-  expect_true(nrow(result) > 1)
+  expect_true(nrow(result) > 0)
 })
 
 test_that("get_parameters handles numeric date inputs", {

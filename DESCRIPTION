@@ -1,6 +1,6 @@
 Package: resourcecode
 Title: Access to the 'RESOURCECODE' Hindcast Database
-Version: 0.5.4
+Version: 0.5.5
 Authors@R: 
     person("Nicolas", "Raillard", , "nicolas.raillard@ifremer.fr", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-3385-5104"))
@@ -29,9 +29,9 @@ Encoding: UTF-8
 Language: en-US
 LazyData: true
 NeedsCompilation: yes
-Packaged: 2026-05-06 20:06:56 UTC; nraillar
+Packaged: 2026-08-03 13:09:03 UTC; nraillar
 Author: Nicolas Raillard [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-3385-5104>)
 Maintainer: Nicolas Raillard <nicolas.raillard@ifremer.fr>
 Repository: CRAN
-Date/Publication: 2026-05-07 09:40:02 UTC
+Date/Publication: 2026-08-03 23:20:02 UTC
